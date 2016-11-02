@@ -6,6 +6,7 @@
 #define DATA_STRUCTURES_AND_ALGORITHM_ANALYSIS_IN_CPP_AVLTREE_H
 
 #include <algorithm>
+#include <iostream>
 
 template <typename Comparable>
 class AvlTree {
@@ -24,6 +25,7 @@ public:
     void insert(const Comparable & x);
     void insert(Comparable && x);
     void remove(const Comparable & x);
+    void printTree(std::ostream &out = std::cout) const;
 
     AvlTree & operator= (const Comparable & rhs);
     AvlTree & operator= (Comparable && rhs);
@@ -54,12 +56,14 @@ private:
     void makeEmpty(AvlNode * & t);
     AvlNode * clone(AvlNode * t) const;
     int height(AvlNode * t) const;
-    void balance(AvlNode * t);
+    void balance(AvlNode * & t);
     void rotateWithLeftChild(AvlNode * & k2);
     void doubleWithLeftChild(AvlNode * & k3);
     void rotateWithRightChild(AvlNode * & k2);
     void doubleWithRightChild(AvlNode * & k3);
+    void printTree(AvlNode *t, std::ostream &out, int indent = 0) const;
 };
 
+#include "AvlTree.cpp"
 
 #endif //DATA_STRUCTURES_AND_ALGORITHM_ANALYSIS_IN_CPP_AVLTREE_H

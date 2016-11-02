@@ -5,7 +5,7 @@
 //#include "Chapter1_Programming_A_General_Overview/Excercises/Ex_1_13_class_template_collection.cpp"
 //#include "Chapter1_Programming_A_General_Overview/Excercises/Ex_1_14_class_template_ordered_collection.cpp"
 //#include "Chapter2_Algorithm_Analysis/Excercises/Ex_2_8_c.cpp"
-#include "Chapter3_List_Stacks_and_Queues/3_4_Vector.cpp"
+//#include "Chapter3_List_Stacks_and_Queues/3_4_Vector.cpp"
 //#include "Chapter3_List_Stacks_and_Queues/3_5_List.cpp"
 //#include "Chapter3_List_Stacks_and_Queues/3_6_Stack.cpp"
 //#include "Chapter3_List_Stacks_and_Queues/3_6_3_Infix_to_Postfix_Conversion.cpp"

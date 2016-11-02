@@ -51,10 +51,11 @@ private:
     BinaryNode * findMax(BinaryNode *t) const;
     bool contains(const Comparable & x, BinaryNode *t) const;
     void makeEmpty(BinaryNode * & t);
-    void printTree(BinaryNode *t, std::ostream & out) const;
+    void printTree(BinaryNode *t, std::ostream & out, int indent = 0) const;
     BinaryNode *clone(BinaryNode *t) const;
 
 };
 
+#include "BinarySearchTree.cpp"
 
 #endif //DATA_STRUCTURES_AND_ALGORITHM_ANALYSIS_IN_CPP_BINARYSEARCHTREE_H

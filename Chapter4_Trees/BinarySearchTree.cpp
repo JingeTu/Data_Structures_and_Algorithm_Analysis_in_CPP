@@ -2,36 +2,43 @@
 // Created by 涂金戈 on 01/11/2016.
 //
 
-#include "BinarySearchTree.h"
+#include <iomanip>
 
-BinarySearchTree::BinarySearchTree(): root{nullptr} {
+template <typename Comparable>
+BinarySearchTree<Comparable>::BinarySearchTree(): root{nullptr} {
 
 }
 
-BinarySearchTree::BinarySearchTree(const BinarySearchTree &rhs): root{nullptr} {
+template <typename Comparable>
+BinarySearchTree<Comparable>::BinarySearchTree(const BinarySearchTree &rhs): root{nullptr} {
     root = clone(rhs.root);
 }
 
-BinarySearchTree::BinarySearchTree(BinarySearchTree &&rhs): root{nullptr} {
+template <typename Comparable>
+BinarySearchTree<Comparable>::BinarySearchTree(BinarySearchTree &&rhs): root{nullptr} {
     std::swap(root, rhs.root);
 }
 
-BinarySearchTree* BinarySearchTree::clone(BinaryNode *t) const {
+template <typename Comparable>
+typename BinarySearchTree<Comparable>::BinaryNode* BinarySearchTree<Comparable>::clone(BinaryNode *t) const {
     if (t == nullptr)
         return nullptr;
     else
         return new BinaryNode{t->element, clone(t->left), clone(t->right)};
 }
 
-BinarySearchTree::~BinarySearchTree() {
+template <typename Comparable>
+BinarySearchTree<Comparable>::~BinarySearchTree() {
     makeEmpty();
 };
 
-void BinarySearchTree::makeEmpty() {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::makeEmpty() {
     makeEmpty(root);
 }
 
-void BinarySearchTree::makeEmpty(BinaryNode *&t) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::makeEmpty(BinaryNode *&t) {
     if (t != nullptr) {
         makeEmpty(t->left);
         makeEmpty(t->right);
@@ -40,18 +47,21 @@ void BinarySearchTree::makeEmpty(BinaryNode *&t) {
     t = nullptr;
 }
 
-const Comparable & findMin() const {
+template <typename Comparable>
+const Comparable & BinarySearchTree<Comparable>::findMin() const {
     return findMin(root)->element;
 }
 
-BinaryNode * BinarySearchTree::findMin(BinaryNode *t) const { // non-recursive version
+template <typename Comparable>
+typename BinarySearchTree<Comparable>::BinaryNode * BinarySearchTree<Comparable>::findMin(BinaryNode *t) const { // non-recursive version
     if (t != nullptr)
         while (t->left != nullptr)
             t = t->left;
     return t;
 }
 
-//BinaryNode * BinarySearchTree::findMin(BinaryNode *t) const { // recursive version
+//template <typename Comparable>
+//BinaryNode<Comparable> * BinarySearchTree<Comparable>::findMin(BinaryNode *t) const { // recursive version
 //    if (t == nullptr)
 //        return nullptr;
 //    else if (t->left == nullptr)
@@ -59,18 +69,21 @@ BinaryNode * BinarySearchTree::findMin(BinaryNode *t) const { // non-recursive v
 //    return findMin(t->left);
 //}
 
-const Comparable & BinarySearchTree::findMax() const {
+template <typename Comparable>
+const Comparable & BinarySearchTree<Comparable>::findMax() const {
     return findMax(root)->element;
 }
 
-BinaryNode * BinarySearchTree::findMax(BinaryNode *t) const { // non-recursive version
+template <typename Comparable>
+typename BinarySearchTree<Comparable>::BinaryNode * BinarySearchTree<Comparable>::findMax(BinaryNode *t) const { // non-recursive version
     if (t != nullptr)
         while (t->right != nullptr)
             t = t->right;
     return t;
 }
 
-//BinaryNode * BinarySearchTree::findMax(BinaryNode *t) const { // recursive version
+//template <typename Comparable>
+//BinaryNode<Comparable> * BinarySearchTree<Comparable>::findMax(BinaryNode *t) const { // recursive version
 //    if (t == nullptr)
 //        return nullptr;
 //    else if (t->right == nullptr)
@@ -78,11 +91,13 @@ BinaryNode * BinarySearchTree::findMax(BinaryNode *t) const { // non-recursive v
 //    return findMax(t->right);
 //}
 
-bool BinarySearchTree::contains(const Comparable &x) const {
+template <typename Comparable>
+bool BinarySearchTree<Comparable>::contains(const Comparable &x) const {
     return contains(x, root);
 }
 
-bool BinarySearchTree::contains(const Comparable &x, BinaryNode *t) const {
+template <typename Comparable>
+bool BinarySearchTree<Comparable>::contains(const Comparable &x, BinaryNode *t) const {
     if (t == nullptr)
         return false;
     else if (x < t->element)
@@ -93,15 +108,18 @@ bool BinarySearchTree::contains(const Comparable &x, BinaryNode *t) const {
         return true;
 }
 
-bool BinarySearchTree::isEmpty() const {
+template <typename Comparable>
+bool BinarySearchTree<Comparable>::isEmpty() const {
     return root == nullptr;
 }
 
-void BinarySearchTree::insert(const Comparable &x) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::insert(const Comparable &x) {
     insert(x, root);
 }
 
-void BinarySearchTree::insert(const Comparable &x, BinaryNode *&t) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::insert(const Comparable &x, BinaryNode *&t) {
     if (t == nullptr)
         t = new BinaryNode{x, nullptr, nullptr};
     else if (x < t->element)
@@ -112,11 +130,13 @@ void BinarySearchTree::insert(const Comparable &x, BinaryNode *&t) {
         ;
 }
 
-void BinarySearchTree::insert(Comparable &&x) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::insert(Comparable &&x) {
     insert(x, root);
 }
 
-void BinarySearchTree::insert(Comparable &&x, BinaryNode *&t) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::insert(Comparable &&x, BinaryNode *&t) {
     if (t == nullptr)
         t = new BinaryNode{std::move(x), nullptr, nullptr};
     else if (x < t->element)
@@ -127,11 +147,13 @@ void BinarySearchTree::insert(Comparable &&x, BinaryNode *&t) {
         ;
 }
 
-void BinarySearchTree::remove(const Comparable &x) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::remove(const Comparable &x) {
     remove(x, root);
 }
 
-void BinarySearchTree::remove(const Comparable &x, BinaryNode *&t) {
+template <typename Comparable>
+void BinarySearchTree<Comparable>::remove(const Comparable &x, BinaryNode *&t) {
     if (t == nullptr)
         return;
     if (x < t->element)
@@ -149,17 +171,19 @@ void BinarySearchTree::remove(const Comparable &x, BinaryNode *&t) {
     }
 }
 
-void BinarySearchTree::printTree(std::ostream &out) const {
-    printTree(root, out);
+template <typename Comparable>
+void BinarySearchTree<Comparable>::printTree(std::ostream &out) const {
+    if (isEmpty())
+        out << "Empty tree" << std::endl;
+    else
+        printTree(root, out, 0);
 }
 
-void BinarySearchTree::printTree(BinaryNode *t, std::ostream &out) const {
-    if(t != NULL) {
-        if(t->left) postorder(t->left, indent+4);
-        if(t->right) postorder(t->right, indent+4);
-        if (indent) {
-            std::cout << std::setw(indent) << ' ';
-        }
-        cout<< t->element << "\n ";
+template <typename Comparable>
+void BinarySearchTree<Comparable>::printTree(BinaryNode *t, std::ostream &out, int indent) const {
+    if (t != nullptr) {
+        printTree(t->left, out, indent + 4);
+        out << std::setw(indent) << t->element << std::endl;
+        printTree(t->right, out, indent + 4);
     }
 }
