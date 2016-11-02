@@ -182,8 +182,8 @@ void BinarySearchTree<Comparable>::printTree(std::ostream &out) const {
 template <typename Comparable>
 void BinarySearchTree<Comparable>::printTree(BinaryNode *t, std::ostream &out, int indent) const {
     if (t != nullptr) {
-        printTree(t->left, out, indent + 4);
-        out << std::setw(indent) << t->element << std::endl;
         printTree(t->right, out, indent + 4);
+        out << std::setw(indent) << t->element << std::endl;
+        printTree(t->left, out, indent + 4);
     }
 }
