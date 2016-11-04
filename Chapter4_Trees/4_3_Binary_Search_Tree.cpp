@@ -31,20 +31,9 @@ int main() {
 
     BinarySearchTree<int> bt;
 
-//    for (int i = 0; i < N; ++i) {
-//        bt.insert(nodes[i]);
-//    }
-
-    bt.insert(3);
-    bt.insert(1);
-    bt.insert(4);
-    bt.insert(6);
-    bt.insert(9);
-    bt.insert(2);
-    bt.insert(5);
-    bt.insert(7);
-
-    bt.remove(3);
+    for (int i = 0; i < N; ++i) {
+        bt.insert(nodes[i]);
+    }
 
     bt.printTree();
 
