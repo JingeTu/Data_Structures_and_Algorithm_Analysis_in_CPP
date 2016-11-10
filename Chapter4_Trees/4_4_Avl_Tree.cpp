@@ -4,6 +4,7 @@
 
 #include "AvlTree.h"
 #include <cstdlib>
+#include <ctime>
 
 int* Permutation3(int N) {
 //    std::cout << "Alg3. permutate " << N << ".\n";
@@ -11,6 +12,7 @@ int* Permutation3(int N) {
 
 //    clock_t start_clock, end_clock;
 //    start_clock = clock();
+    std::srand(std::time(0));
     for (a_i = 0; a_i < N; ++a_i)
         a[a_i] = a_i + 1;
 
