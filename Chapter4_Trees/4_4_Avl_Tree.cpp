@@ -3,30 +3,11 @@
 //
 
 #include "AvlTree.h"
-#include <cstdlib>
-#include <ctime>
-
-int* Permutation3(int N) {
-//    std::cout << "Alg3. permutate " << N << ".\n";
-    int *a = new int[N], a_i;
-
-//    clock_t start_clock, end_clock;
-//    start_clock = clock();
-    std::srand(std::time(0));
-    for (a_i = 0; a_i < N; ++a_i)
-        a[a_i] = a_i + 1;
-
-    for (a_i = 0; a_i < N; ++a_i) {
-        std::swap(a[a_i], a[std::rand() % (a_i + 1)]);
-    }
-//    end_clock = clock();
-
-//    std::cout << "Consumed " << double(end_clock - start_clock) / CLOCKS_PER_SEC * 1e6 <<" us.\n";
-
-    return a;
-}
+#include "../Common_Tools/permutation.h"
 
 int main() {
+
+    std::srand(std::time(0));
 
     int N = 50;
     int *nodes = Permutation3(N);
