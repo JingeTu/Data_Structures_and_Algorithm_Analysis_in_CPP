@@ -7,227 +7,91 @@
 #include <vector>
 #include <climits>
 #include <queue>
+#include <map>
+#include "../Common_Tools/Graph.h"
 
-class Vertex;
+void dijkstra(const Graph &graph, Vertex *s,
+              std::map<std::string, int> &distance_map,
+              std::map<std::string, std::string> &path_map) {
+    const std::vector<Vertex *> &vertices = graph.GetVertices();
+    const int vertex_num = vertices.size();
 
-struct ToEdge {
-    Vertex *to_vertex_;
-    int weight_;
+    std::map<std::string, bool> known_map;
 
-    ToEdge(Vertex *to, const int &weight) : to_vertex_{to}, weight_{weight} {}
-};
-
-class Vertex {
-public:
-    Vertex(std::string name) : name_{name}, path_{nullptr}, known_{false} {}
-
-    std::string GetName() { return name_; }
-
-    Vertex *GetPath() const {
-        return path_;
+    for (Vertex *v: vertices) {
+        distance_map.insert(std::make_pair(v->GetName(), INT_MAX / 2));
+        path_map.insert(std::make_pair(v->GetName(), ""));
+        known_map.insert(std::make_pair(v->GetName(), false));
     }
 
-    void SetPath(Vertex *path) {
-        this->path_ = path;
-    }
-
-    int GetDist() const {
-        return dist_;
-    }
-
-    void SetDist(const int &dist) {
-        this->dist_ = dist;
-    }
-
-    bool GetKnown() {
-        return known_;
-    }
-
-    void SetKnown(const bool known) {
-        this->known_ = known;
-    }
-
-    void AddTo(const ToEdge &to_edge) {
-        std::list<ToEdge>::iterator it = to_.begin();
-        std::list<ToEdge>::const_iterator end = to_.end();
-        while (it != end) {
-            if ((*it++).to_vertex_ == to_edge.to_vertex_)
-                return;
-        }
-        to_.push_back(to_edge);
-    }
-
-    const std::list<ToEdge> &GetTos() {
-        return to_;
-    }
-
-    void PrintAdjs() {
-        std::list<ToEdge>::iterator it = to_.begin();
-        std::list<ToEdge>::const_iterator end = to_.end();
-        while (it != end) {
-            std::cout << (*it++).to_vertex_->GetName() << " ";
-        }
-        std::cout << "\n";
-    }
-
-private:
-    std::string name_;
-    std::list<ToEdge> to_;
-    int dist_;
-    bool known_;
-    Vertex *path_;
-};
-
-void dijkstra(std::vector<Vertex *> graph, Vertex *s) {
-    for (auto v: graph) {
-        v->SetDist(INT_MAX / 2); // ATTENTION here, in case of the_minimum->GetDist() + x.weight_ overflow, here use INT_MAX / 2 instead of INT_MAX
-        v->SetKnown(false);
-    }
-
-    s->SetDist(0);
+    (*distance_map.find(s->GetName())).second = 0;
     int known_count = 0;
 
-    while (known_count < graph.size()) {
+    while (known_count < vertex_num) {
         Vertex *the_minimum = nullptr;
         int dv_min = INT_MAX / 2;
-        for (auto &v: graph) {
-            if (!v->GetKnown() && v->GetDist() <= dv_min) {
-                the_minimum = v;
-                dv_min = v->GetDist();
+        for (Vertex *v: vertices) {
+            const bool &known = (*known_map.find(v->GetName())).second;
+            if (!known) {
+                const int &distance = (*distance_map.find(v->GetName())).second;
+                if (distance <= dv_min) {
+                    the_minimum = v;
+                    dv_min = distance;
+                }
             }
         }
 
-        the_minimum->SetKnown(true);
+        (*known_map.find(the_minimum->GetName())).second = true;
         ++known_count;
 
-        const auto &to = the_minimum->GetTos();
-        for (auto &x: to) {
-            if (x.to_vertex_->GetDist() > the_minimum->GetDist() + x.weight_) {
-                x.to_vertex_->SetDist(the_minimum->GetDist() + x.weight_);
-                x.to_vertex_->SetPath(the_minimum);
+        const int &distance = (*distance_map.find(the_minimum->GetName())).second;
+
+        const std::list<Edge> &to = the_minimum->GetTos();
+        for (const Edge &x: to) {
+            const int &x_distance = (*distance_map.find(x.vertex->GetName())).second;
+            if (x_distance > distance + x.weight) {
+                (*distance_map.find(x.vertex->GetName())).second = distance + x.weight;
+                (*path_map.find(x.vertex->GetName())).second = the_minimum->GetName();
             }
         }
     }
 }
 
-struct cmp {
-    bool operator()(const Vertex *a, const Vertex *b) {
-        return a->GetDist() < b->GetDist();
-    }
-};
+void dijkstra_heap(const Graph &graph, Vertex *s,
+                   std::map<std::string, int> &distance_map,
+                   std::map<std::string, std::string> &path_map) {
 
-void dijkstra_heap(std::vector<Vertex *> graph, Vertex *s) {
-    // wait for more powerful priority queue implemented by myself, Need decreaseKey
-    // maybe use boost, but this will be not portable
-    for (auto v: graph) {
-        v->SetDist(INT_MAX);
-        v->SetKnown(false);
-    }
-
-    s->SetDist(0);
-    int known_count = 0;
-
-    std::priority_queue<Vertex *, std::vector<Vertex *>, cmp> unknowns;
-    for (auto &v: graph) {
-        unknowns.push(v);
-    }
-
-    while (known_count < graph.size()) {
-        Vertex *the_minimum = nullptr;
-        int dv_min = INT_MAX;
-        for (auto &v: graph) {
-            if (!v->GetKnown() && v->GetDist() < dv_min) {
-                the_minimum = v;
-                dv_min = v->GetDist();
-            }
-        }
-
-        the_minimum->SetKnown(true);
-        ++known_count;
-
-        const auto &to = the_minimum->GetTos();
-        for (auto &x: to) {
-            if (x.to_vertex_->GetDist() > the_minimum->GetDist() + x.weight_) {
-                x.to_vertex_->SetDist(the_minimum->GetDist() + x.weight_);
-                x.to_vertex_->SetPath(the_minimum);
-
-            }
-        }
-    }
-}
-
-void PrintPathsHelper(const std::vector<Vertex *> &graph, Vertex *v) {
-    if (v->GetPath() != nullptr) {
-        PrintPathsHelper(graph, v->GetPath());
-        std::cout << " to ";
-    }
-    std::cout << v->GetName();
-}
-
-void PrintPaths(const std::vector<Vertex *> &graph) {
-    for (auto &v : graph) {
-        if (v->GetPath() != nullptr) {
-            PrintPathsHelper(graph, v);
-            std::cout << "\tPath Length: " << v->GetDist();
-            std::cout << '\n';
-        }
-        else {
-            std::cout << "No path from START to " << v->GetName() << ".\n";
-        }
-    }
 }
 
 int main() {
 
-    Vertex v1("v1");
-    Vertex v2("v2");
-    Vertex v3("v3");
-    Vertex v4("v4");
-    Vertex v5("v5");
-    Vertex v6("v6");
-    Vertex v7("v7");
+    Graph graph;
 
-    // cyclic graph
-//    v1.AddTo(ToEdge(&v2, 2));
-//    v1.AddTo(ToEdge(&v4, 1));
-//    v2.AddTo(ToEdge(&v4, 3));
-//    v2.AddTo(ToEdge(&v5, 10));
-//    v3.AddTo(ToEdge(&v1, 4));
-//    v3.AddTo(ToEdge(&v6, 5));
-//    v4.AddTo(ToEdge(&v3, 2));
-//    v4.AddTo(ToEdge(&v5, 2));
-//    v4.AddTo(ToEdge(&v6, 8));
-//    v4.AddTo(ToEdge(&v7, 4));
-//    v5.AddTo(ToEdge(&v7, 6));
-//    v7.AddTo(ToEdge(&v6, 1));
+    Vertex *vertices = new Vertex[8];
 
-    // acyclic graph
-    v1.AddTo(ToEdge(&v2, 2));
-    v1.AddTo(ToEdge(&v4, 1));
-    v1.AddTo(ToEdge(&v3, 4));
-    v2.AddTo(ToEdge(&v4, 3));
-    v2.AddTo(ToEdge(&v5, 10));
-    v3.AddTo(ToEdge(&v6, 5));
-    v4.AddTo(ToEdge(&v3, 2));
-    v4.AddTo(ToEdge(&v5, 2));
-    v4.AddTo(ToEdge(&v6, 8));
-    v4.AddTo(ToEdge(&v7, 4));
-    v5.AddTo(ToEdge(&v7, 6));
-    v7.AddTo(ToEdge(&v6, 1));
+    for (int i = 1; i <= 7; ++i) {
+        vertices[i].SetName(std::string("v").append(std::to_string(i)));
+        graph.AddVertex(&vertices[i]);
+    }
 
-    std::vector<Vertex *> vertex_vec;
-    vertex_vec.reserve(7);
-    vertex_vec.push_back(&v1);
-    vertex_vec.push_back(&v2);
-    vertex_vec.push_back(&v3);
-    vertex_vec.push_back(&v4);
-    vertex_vec.push_back(&v5);
-    vertex_vec.push_back(&v6);
-    vertex_vec.push_back(&v7);
+    graph.AddEdge(&vertices[1], &vertices[2], 2);
+    graph.AddEdge(&vertices[1], &vertices[4], 1);
+    graph.AddEdge(&vertices[2], &vertices[4], 3);
+    graph.AddEdge(&vertices[2], &vertices[5], 10);
+    graph.AddEdge(&vertices[3], &vertices[1], 4);
+    graph.AddEdge(&vertices[3], &vertices[6], 5);
+    graph.AddEdge(&vertices[4], &vertices[3], 2);
+    graph.AddEdge(&vertices[4], &vertices[5], 2);
+    graph.AddEdge(&vertices[4], &vertices[6], 8);
+    graph.AddEdge(&vertices[4], &vertices[7], 4);
+    graph.AddEdge(&vertices[5], &vertices[7], 6);
+    graph.AddEdge(&vertices[7], &vertices[6], 1);
 
-    dijkstra(vertex_vec, &v3);
+    std::map<std::string, int> distance_map;
+    std::map<std::string, std::string> path_map;
+    dijkstra(graph, &vertices[1], distance_map, path_map);
 
-    PrintPaths(vertex_vec);
+    Graph::PrintPaths(graph, path_map);
 
     return 0;
 }

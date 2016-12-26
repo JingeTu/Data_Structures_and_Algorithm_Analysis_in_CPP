@@ -7,198 +7,96 @@
 #include <list>
 #include <climits>
 #include <vector>
+#include <map>
+#include "../Common_Tools/Graph.h"
 
-class Vertex;
-
-struct ToEdge {
-    Vertex *to_vertex_;
-    int weight_;
-
-    ToEdge(Vertex *to, const int &weight) : to_vertex_{to}, weight_{weight} {}
-};
-
-class Vertex {
-public:
-    Vertex(std::string name) : name_{name}, in_degree_{0}, topNum{0}, path_{nullptr}, known_{false} {}
-
-    std::string GetName() { return name_; }
-
-    Vertex *GetPath() const {
-        return path_;
-    }
-
-    void SetPath(Vertex *path) {
-        this->path_ = path;
-    }
-
-    int GetInDegree() {
-        return in_degree_;
-    }
-
-    void SetTopNum(const int &topNum) {
-        this->topNum = topNum;
-    }
-
-    int GetTopNum() {
-        return topNum;
-    }
-
-    int GetDist() const {
-        return dist_;
-    }
-
-    void SetDist(const int &dist) {
-        this->dist_ = dist;
-    }
-
-    bool GetKnown() {
-        return known_;
-    }
-
-    void SetKnown(const bool known) {
-        this->known_ = known;
-    }
-
-    void AddTo(const ToEdge &to_edge) {
-        std::list<ToEdge>::iterator it = to_.begin();
-        std::list<ToEdge>::const_iterator end = to_.end();
-        while (it != end) {
-            if ((*it++).to_vertex_ == to_edge.to_vertex_)
-                return;
-        }
-        to_edge.to_vertex_->AddInDegree();
-        to_.push_back(to_edge);
-    }
-
-    const std::list<ToEdge> &GetTos() {
-        return to_;
-    }
-
-    void PrintAdjs() {
-        std::list<ToEdge>::iterator it = to_.begin();
-        std::list<ToEdge>::const_iterator end = to_.end();
-        while (it != end) {
-            std::cout << (*it).to_vertex_->GetName() << " ";
-            ++it;
-        }
-        std::cout << "\n";
-    }
-
-    void SubtractInDegree() {
-        --in_degree_;
-    }
-
-private:
-
-    void AddInDegree() {
-        ++in_degree_;
-    }
-
-    std::string name_;
-    std::list<ToEdge> to_;
-    int dist_;
-    bool known_;
-    int in_degree_;
-    int topNum;
-    Vertex *path_;
-};
-
-void acyclic_dijkstra(std::vector<Vertex *> &graph, Vertex *s) {
+void AcyclicDijkstra(const Graph &graph, Vertex *s,
+                      std::map<std::string, int> &distance_map,
+                      std::map<std::string, std::string> &path_map,
+                      std::map<std::string, int> indegree_map) {
+    const std::vector<Vertex *> &vertices = graph.GetVertices();
     std::queue<Vertex *> q;
     int counter = 0;
 
-    for (auto &v : graph) {
-        v->SetDist(INT_MAX / 2);
-        v->SetKnown(false);
+    std::map<std::string, bool> known_map;
+
+    for (Vertex *v : vertices) {
+        distance_map.insert(std::make_pair(v->GetName(), INT_MAX / 2));
+        known_map.insert(std::make_pair(v->GetName(), false));
+        path_map.insert(std::make_pair(v->GetName(), ""));
     }
 
-    s->SetDist(0);
+    (*distance_map.find(s->GetName())).second = 0;
     q.push(s);
 
-    for (auto &v : graph) {
-        if (v->GetInDegree() == 0 &&
-            v != s) // if the vertex has a indegree of 0, there is no path from start vertex to it
+    for (Vertex *v : vertices) {
+        const int &v_indegree = (*indegree_map.find(v->GetName())).second;
+        if (v_indegree == 0 && v != s) // if the vertex has a indegree of 0, there is no path from start vertex to it
             q.push(v);
     }
 
     while (!q.empty()) {
         Vertex *v = q.front();
         q.pop();
-        v->SetTopNum(++counter); // not related to dijkstra result, can remove
-        v->SetKnown(true);
+        (*known_map.find(v->GetName())).second = true;
 
-        const std::list<ToEdge> &to = v->GetTos();
+        const int &v_distance = (*distance_map.find(v->GetName())).second;
 
-        for (auto &w : to) {
-            if (w.to_vertex_->GetDist() > v->GetDist() + w.weight_) {
-                w.to_vertex_->SetDist(v->GetDist() + w.weight_);
-                w.to_vertex_->SetPath(v);
+        const std::list<Edge> &to = v->GetTos();
+
+        for (const Edge &w : to) {
+            const int &w_distance = (*distance_map.find(w.vertex->GetName())).second;
+
+            if (w_distance > v_distance + w.weight) {
+                (*distance_map.find(w.vertex->GetName())).second = v_distance + w.weight;
+                (*path_map.find(w.vertex->GetName())).second = v->GetName();
             }
-            w.to_vertex_->SubtractInDegree();
-            if (w.to_vertex_->GetInDegree() == 0)
-                q.push(w.to_vertex_);
-        }
-    }
-}
+            (*indegree_map.find(w.vertex->GetName())).second -= 1;
 
-void PrintPathsHelper(const std::vector<Vertex *> &graph, Vertex *v) {
-    if (v != nullptr && v->GetPath() != nullptr) {
-        PrintPathsHelper(graph, v->GetPath());
-        std::cout << " to ";
-    }
-    if (v !== nullptr) {
-        std::cout << v->GetName();
-    }
-}
-
-void PrintPaths(const std::vector<Vertex *> &graph) {
-    for (auto &v : graph) {
-        if (v->GetPath() != nullptr) {
-            PrintPathsHelper(graph, v);
-            std::cout << "\tPath Length: " << v->GetDist();
-            std::cout << '\n';
-        } else {
-            std::cout << "No path from START to " << v->GetName() << ".\n";
+            if ((*indegree_map.find(w.vertex->GetName())).second == 0)
+                q.push(w.vertex);
         }
     }
 }
 
 int main() {
 
-    Vertex v1("v1");
-    Vertex v2("v2");
-    Vertex v3("v3");
-    Vertex v4("v4");
-    Vertex v5("v5");
-    Vertex v6("v6");
-    Vertex v7("v7");
+    Graph graph;
 
-    v1.AddTo(ToEdge(&v2, 2));
-    v1.AddTo(ToEdge(&v4, 1));
-    v1.AddTo(ToEdge(&v3, 1));
-    v2.AddTo(ToEdge(&v4, 3));
-    v2.AddTo(ToEdge(&v5, 10));
-    v3.AddTo(ToEdge(&v6, 5));
-    v4.AddTo(ToEdge(&v3, 2));
-    v4.AddTo(ToEdge(&v5, 2));
-    v4.AddTo(ToEdge(&v6, 8));
-    v4.AddTo(ToEdge(&v7, 4));
-    v5.AddTo(ToEdge(&v7, 6));
-    v7.AddTo(ToEdge(&v6, 1));
+    Vertex *vertices = new Vertex[8];
+    std::map<std::string, int> indegree_map;
 
-    std::vector<Vertex *> vertex_vec;
-    vertex_vec.reserve(7);
-    vertex_vec.push_back(&v1);
-    vertex_vec.push_back(&v2);
-    vertex_vec.push_back(&v3);
-    vertex_vec.push_back(&v4);
-    vertex_vec.push_back(&v5);
-    vertex_vec.push_back(&v6);
-    vertex_vec.push_back(&v7);
+    for (int i = 1; i <= 7; ++i) {
+        vertices[i].SetName(std::string("v").append(std::to_string(i)));
+        graph.AddVertex(&vertices[i]);
+        indegree_map.insert(std::make_pair(vertices[i].GetName(), 0));
+    }
 
-    acyclic_dijkstra(vertex_vec, &v1);
+    graph.AddEdge(&vertices[1], &vertices[2], 2);
+    graph.AddEdge(&vertices[1], &vertices[4], 1);
+    graph.AddEdge(&vertices[1], &vertices[3], 1);
+    graph.AddEdge(&vertices[2], &vertices[4], 3);
+    graph.AddEdge(&vertices[2], &vertices[5], 10);
+    graph.AddEdge(&vertices[3], &vertices[6], 5);
+    graph.AddEdge(&vertices[4], &vertices[3], 2);
+    graph.AddEdge(&vertices[4], &vertices[5], 2);
+    graph.AddEdge(&vertices[4], &vertices[6], 8);
+    graph.AddEdge(&vertices[4], &vertices[7], 4);
+    graph.AddEdge(&vertices[5], &vertices[7], 6);
+    graph.AddEdge(&vertices[7], &vertices[6], 1);
 
-    PrintPaths(vertex_vec);
+    (*indegree_map.find(vertices[2].GetName())).second = 1;
+    (*indegree_map.find(vertices[3].GetName())).second = 2;
+    (*indegree_map.find(vertices[4].GetName())).second = 2;
+    (*indegree_map.find(vertices[5].GetName())).second = 2;
+    (*indegree_map.find(vertices[6].GetName())).second = 3;
+    (*indegree_map.find(vertices[7].GetName())).second = 2;
+
+    std::map<std::string, int> distance_map;
+    std::map<std::string, std::string> path_map;
+    AcyclicDijkstra(graph, &vertices[1], distance_map, path_map, indegree_map);
+
+    Graph::PrintPaths(graph, path_map);
 
     return 0;
 }

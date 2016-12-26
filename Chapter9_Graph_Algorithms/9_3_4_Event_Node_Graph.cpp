@@ -5,284 +5,188 @@
 #include <iostream>
 #include <vector>
 #include <list>
-#include <cstdio>
+#include <map>
+#include <string>
+#include "../Common_Tools/Graph.h"
 
-class Vertex;
+int EarliestCompletionTime(const Graph &graph, Vertex *start, Vertex *end,
+                           std::map<std::string, int> &earliest_completion_time_map) {
+    auto &result_map = earliest_completion_time_map;
+    const std::vector<Vertex *> &vertices = graph.GetVertices();
+    const int vertex_num = vertices.size();
 
-struct Edge {
-    Vertex *vertex;
-    int weight;
-    std::string name_;
+    std::map<std::string, bool> known_map;
 
-    Edge(Vertex *to, const int &weight, const std::string &name = "") : vertex{to}, weight{weight}, name_{} {}
-};
-
-class Vertex {
-public:
-    Vertex(std::string name) : name_{name}, path_{nullptr}, known_{false} {}
-
-    std::string GetName() { return name_; }
-
-    Vertex *GetPath() const {
-        return path_;
+    for (Vertex *v : vertices) {
+        known_map.insert(std::make_pair(v->GetName(), false));
+        result_map.insert(std::make_pair(v->GetName(), -INT_MAX / 2));
     }
 
-    void SetPath(Vertex *path) {
-        this->path_ = path;
-    }
-
-    int GetDist() const {
-        return dist_;
-    }
-
-    void SetDist(const int &dist) {
-        this->dist_ = dist;
-    }
-
-    bool GetKnown() {
-        return known_;
-    }
-
-    void SetKnown(const bool known) {
-        this->known_ = known;
-    }
-
-    void AddTo(const Edge &to_edge) {
-        std::list<Edge>::iterator it = to_.begin();
-        std::list<Edge>::const_iterator end = to_.end();
-        while (it != end) {
-            if ((*it++).vertex == to_edge.vertex)
-                return;
-        }
-        to_.push_back(to_edge);
-        to_edge.vertex->AddFrom(Edge(this, to_edge.weight));
-    }
-
-    const std::list<Edge> &GetTos() {
-        return to_;
-    }
-
-    const std::list<Edge> &GetFroms() {
-        return from_;
-    }
-
-    void PrintAdjs() {
-        std::list<Edge>::iterator it = to_.begin();
-        std::list<Edge>::const_iterator end = to_.end();
-        while (it != end) {
-            std::cout << (*it++).vertex->GetName() << " ";
-        }
-        std::cout << "\n";
-    }
-
-private:
-
-    void AddFrom(const Edge &from_edge) {
-        std::list<Edge>::iterator it = from_.begin();
-        std::list<Edge>::const_iterator end = from_.end();
-        while (it != end) {
-            if ((*it++).vertex == from_edge.vertex)
-                return;
-        }
-        from_.push_back(from_edge);
-    }
-
-    std::string name_;
-    std::list<Edge> to_;
-    std::list<Edge> from_;
-    int dist_;
-    bool known_;
-    Vertex *path_;
-};
-
-int EarliestCompletionTime(std::vector<Vertex *> graph, Vertex *start, Vertex *end) {
-
-    for (Vertex *v : graph) {
-        v->SetDist(-INT_MAX / 2);
-        v->SetKnown(false);
-    }
-
-    start->SetDist(0);
+    (*result_map.find(start->GetName())).second = 0;
     int known_count = 0;
 
-    while (known_count < graph.size()) {
+    while (known_count < vertex_num) {
         Vertex *the_maximum = nullptr;
         int dv_max = -INT_MAX / 2;
-        for (Vertex *v : graph) {
-            if (!v->GetKnown() && v->GetDist() > dv_max) {
+        for (Vertex *v : vertices) {
+            const bool &known = (*known_map.find(v->GetName())).second;
+            const int &distance = (*result_map.find(v->GetName())).second;
+            if (!known && distance > dv_max) {
                 the_maximum = v;
-                dv_max = v->GetDist();
+                dv_max = distance;
             }
         }
 
-        the_maximum->SetKnown(true);
+        (*known_map.find(the_maximum->GetName())).second = true;
         ++known_count;
+
+        const int &the_maximum_distance = (*result_map.find(the_maximum->GetName())).second;
 
         const auto to = the_maximum->GetTos();
         for (const Edge &e : to) {
-            if (!e.vertex->GetKnown() && e.vertex->GetDist() < the_maximum->GetDist() + e.weight) {
-                e.vertex->SetDist(the_maximum->GetDist() + e.weight);
+            const bool &known = (*known_map.find(e.vertex->GetName())).second;
+            int &distance = (*result_map.find(e.vertex->GetName())).second;
+            if (!known && distance < the_maximum_distance + e.weight) {
+                distance = the_maximum_distance + e.weight;
             }
         }
     }
 
-    return end->GetDist();
+    return (*result_map.find(end->GetName())).second;;
 }
 
-void LatestCompletionTime(std::vector<Vertex *> graph, Vertex *end) {
-    for (Vertex *v: graph) {
-        v->SetKnown(false);
+void LatestCompletionTime(const Graph &graph, Vertex *end,
+                          const std::map<std::string, int> &earliest_completion_time_map,
+                          std::map<std::string, int> &lastest_completion_time_map) {
+    const auto &ect_map = earliest_completion_time_map;
+    auto &result_map = lastest_completion_time_map;
+
+    const std::vector<Vertex *> &vertices = graph.GetVertices();
+    const int vertex_num = vertices.size();
+
+    std::map<std::string, bool> known_map;
+
+    for (Vertex *v: vertices) {
+        known_map.insert(std::make_pair(v->GetName(), false));
+        result_map.insert(std::make_pair(v->GetName(), -INT_MAX / 2));
     }
 
-    end->SetDist(end->GetDist());
+    (*result_map.find(end->GetName())).second = (*ect_map.find(end->GetName())).second;
     int known_count = 0;
 
-    while (known_count < graph.size()) {
+    while (known_count < vertex_num) {
         Vertex *the_maximum = nullptr;
         int dv_max = -INT_MAX / 2;
-        for (Vertex *v :graph) {
-            if (!v->GetKnown() && v->GetDist() > dv_max) {
+        for (Vertex *v : vertices) {
+            const bool &v_known = (*known_map.find(v->GetName())).second;
+            const int &v_distance = (*result_map.find(v->GetName())).second;
+            if (!v_known && v_distance > dv_max) {
                 const auto to = v->GetTos();
                 // The selected vertex should have all it's 'to vertices' known.
                 bool all_known = true;
                 for (const Edge &te : to) {
-                    if (!te.vertex->GetKnown()) {
+                    const bool &known = (*known_map.find(te.vertex->GetName())).second;
+                    if (!known) {
                         all_known = false;
                         break;
                     }
                 }
                 if (all_known) {
                     the_maximum = v;
-                    dv_max = v->GetDist();
+                    dv_max = (*result_map.find(v->GetName())).second;
                 }
             }
         }
 
-        the_maximum->SetKnown(true);
+        (*known_map.find(the_maximum->GetName())).second = true;
         ++known_count;
 
         const auto from = the_maximum->GetFroms();
         for (const Edge &fe : from) {
-            if (!fe.vertex->GetKnown()) {
+            const bool fev_known = (*known_map.find(fe.vertex->GetName())).second;
+            int &fev_distance = (*result_map.find(fe.vertex->GetName())).second;
+            if (!fev_known) {
                 const auto to = fe.vertex->GetTos();
                 int dv_min = INT_MAX / 2;
                 for (const Edge &te : to) {
-                    if (te.vertex->GetKnown() && te.vertex->GetDist() - te.weight < dv_min)
-                        dv_min = te.vertex->GetDist() - te.weight;
+                    const bool &tev_known = (*known_map.find(te.vertex->GetName())).second;
+                    const int &tev_distance = (*result_map.find(te.vertex->GetName())).second;
+                    if (tev_known && tev_distance - te.weight < dv_min)
+                        dv_min = tev_distance - te.weight;
                 }
-                fe.vertex->SetDist(dv_min);
+                (*result_map.find(fe.vertex->GetName())).second = dv_min;
             }
         }
     }
 }
 
+template<typename T1, typename T2>
+void PrintMap(const std::map<T1, T2> &the_map) {
+    for (auto it : the_map) {
+        std::cout << it.first << "\t" << it.second << "\n";
+    }
+}
+
 int main() {
 
-    // Activity-node graph
-//    Vertex start("start");
-//    Vertex A("A");
-//    A.SetDist(3);
-//    Vertex B("B");
-//    B.SetDist(2);
-//    Vertex C("C");
-//    C.SetDist(3);
-//    Vertex D("D");
-//    D.SetDist(2);
-//    Vertex E("E");
-//    E.SetDist(1);
-//    Vertex F("F");
-//    F.SetDist(3);
-//    Vertex G("G");
-//    G.SetDist(2);
-//    Vertex H("H");
-//    H.SetDist(1);
-//    Vertex K("K");
-//    K.SetDist(4);
-//    Vertex finish("finish");
-//
-//    start.AddTo(Edge(&A, 1));
-//    start.AddTo(Edge(&B, 1));
-//    A.AddTo(Edge(&C, 1));
-//    A.AddTo(Edge(&D, 1));
-//    B.AddTo(Edge(&D, 1));
-//    B.AddTo(Edge(&E, 1));
-//    C.AddTo(Edge(&F, 1));
-//    D.AddTo(Edge(&F, 1));
-//    D.AddTo(Edge(&G, 1));
-//    E.AddTo(Edge(&G, 1));
-//    E.AddTo(Edge(&K, 1));
-//    F.AddTo(Edge(&H, 1));
-//    G.AddTo(Edge(&H, 1));
-//    H.AddTo(Edge(&finish, 1));
-//    K.AddTo(Edge(&H, 1));
-//
-//    std::vector<Vertex *> vertex_vec;
-//    vertex_vec.push_back(&start);
-//    vertex_vec.push_back(&A);
-//    vertex_vec.push_back(&B);
-//    vertex_vec.push_back(&C);
-//    vertex_vec.push_back(&D);
-//    vertex_vec.push_back(&E);
-//    vertex_vec.push_back(&F);
-//    vertex_vec.push_back(&G);
-//    vertex_vec.push_back(&H);
-//    vertex_vec.push_back(&K);
-//    vertex_vec.push_back(&finish);
+    Graph graph;
 
-    // Event-node graph
-    Vertex node_1("1");
-    Vertex node_2("2");
-    Vertex node_3("3");
-    Vertex node_4("4");
-    Vertex node_5("5");
-    Vertex node_6("6");
-    Vertex node_7("7");
-    Vertex node_8("8");
-    Vertex node_9("9");
-    Vertex node_10("10");
-    Vertex node_6_p("6'");
-    Vertex node_7_p("7'");
-    Vertex node_8_p("8'");
-    Vertex node_10_p("10'");
+    Vertex *start_vertex;
+    Vertex *end_vertex;
+    Vertex *vertices = new Vertex[15];
 
-    node_1.AddTo(Edge(&node_2, 3));
-    node_1.AddTo(Edge(&node_3, 2));
-    node_2.AddTo(Edge(&node_6_p, 0));
-    node_2.AddTo(Edge(&node_4, 3));
-    node_3.AddTo(Edge(&node_6_p, 0));
-    node_3.AddTo(Edge(&node_5, 1));
-    node_4.AddTo(Edge(&node_7_p, 0));
-    node_5.AddTo(Edge(&node_8_p, 0));
-    node_5.AddTo(Edge(&node_9, 4));
-    node_6.AddTo(Edge(&node_7_p, 0));
-    node_6.AddTo(Edge(&node_8_p, 0));
-    node_6_p.AddTo(Edge(&node_6, 2));
-    node_7.AddTo(Edge(&node_10_p, 0));
-    node_7_p.AddTo(Edge(&node_7, 3));
-    node_8.AddTo(Edge(&node_10_p, 0));
-    node_8_p.AddTo(Edge(&node_8, 2));
-    node_9.AddTo(Edge(&node_10_p, 0));
-    node_10_p.AddTo(Edge(&node_10, 1));
+    // Add Vertices
+    for (int i = 1; i <= 10; ++i) { // discard the first element
+        vertices[i].SetName(std::to_string(i));
+        graph.AddVertex(&vertices[i]);
 
-    std::vector<Vertex *> vertex_vec;
-    vertex_vec.push_back(&node_1);
-    vertex_vec.push_back(&node_2);
-    vertex_vec.push_back(&node_3);
-    vertex_vec.push_back(&node_4);
-    vertex_vec.push_back(&node_5);
-    vertex_vec.push_back(&node_6);
-    vertex_vec.push_back(&node_7);
-    vertex_vec.push_back(&node_8);
-    vertex_vec.push_back(&node_9);
-    vertex_vec.push_back(&node_10);
-    vertex_vec.push_back(&node_6_p);
-    vertex_vec.push_back(&node_7_p);
-    vertex_vec.push_back(&node_8_p);
-    vertex_vec.push_back(&node_10_p);
+        if (i == 1)
+            start_vertex = &vertices[i];
+        if (i == 10)
+            end_vertex = &vertices[i];
+    }
+    vertices[11].SetName("6'");
+    vertices[12].SetName("7'");
+    vertices[13].SetName("8'");
+    vertices[14].SetName("10'");
+    graph.AddVertex(&vertices[11]);
+    graph.AddVertex(&vertices[12]);
+    graph.AddVertex(&vertices[13]);
+    graph.AddVertex(&vertices[14]);
 
-    int result = EarliestCompletionTime(vertex_vec, &node_1, &node_10);
+    // Add Edges
+    graph.AddEdge(&vertices[1], &vertices[2], 3);
+    graph.AddEdge(&vertices[1], &vertices[3], 2);
+    graph.AddEdge(&vertices[2], &vertices[11], 0);
+    graph.AddEdge(&vertices[2], &vertices[4], 3);
+    graph.AddEdge(&vertices[3], &vertices[11], 0);
+    graph.AddEdge(&vertices[3], &vertices[5], 1);
+    graph.AddEdge(&vertices[4], &vertices[12], 0);
+    graph.AddEdge(&vertices[5], &vertices[13], 0);
+    graph.AddEdge(&vertices[5], &vertices[9], 4);
+    graph.AddEdge(&vertices[6], &vertices[12], 0);
+    graph.AddEdge(&vertices[6], &vertices[13], 0);
+    graph.AddEdge(&vertices[11], &vertices[6], 2);
+    graph.AddEdge(&vertices[7], &vertices[14], 0);
+    graph.AddEdge(&vertices[12], &vertices[7], 3);
+    graph.AddEdge(&vertices[8], &vertices[14], 0);
+    graph.AddEdge(&vertices[13], &vertices[8], 2);
+    graph.AddEdge(&vertices[9], &vertices[14], 0);
+    graph.AddEdge(&vertices[14], &vertices[10], 1);
 
-    LatestCompletionTime(vertex_vec, &node_10);
+    std::map<std::string, int> earliest_completion_time_map;
+    EarliestCompletionTime(graph, start_vertex,
+                           end_vertex, earliest_completion_time_map);
+
+    std::map<std::string, int> latest_completion_time_map;
+    LatestCompletionTime(graph, end_vertex,
+                         earliest_completion_time_map, latest_completion_time_map);
+
+    std::cout << "Earliest Completion Time: \n";
+    PrintMap(earliest_completion_time_map);
+
+    std::cout << "Latest Completion Time: \n";
+    PrintMap(latest_completion_time_map);
 
     return 0;
 }
