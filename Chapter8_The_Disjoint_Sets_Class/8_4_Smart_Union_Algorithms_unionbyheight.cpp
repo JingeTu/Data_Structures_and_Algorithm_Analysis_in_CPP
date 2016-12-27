@@ -2,57 +2,18 @@
 // Created by 涂金戈 on 22/11/2016.
 //
 
-#include <iostream>
-#include <vector>
-
-class DisjSets {
-public:
-    DisjSets(int numElements);
-
-    int find(int x) const;
-
-    void unionSets(int root1, int root2);
-
-    void prints();
-
-private:
-    std::vector<int> s;
-};
-
-DisjSets::DisjSets(int numElements) : s(numElements, -1) {}
-
-int DisjSets::find(int x) const {
-    if (s[x] < 0)
-        return x;
-    else
-        return find(s[x]);
-}
-
-void DisjSets::unionSets(int root1, int root2) {
-    if (s[root2] < s[root1])
-        s[root1] = root2;
-    else {
-        if (s[root1] == s[root2])
-            --s[root1];
-        s[root2] = root1;
-    }
-}
-
-void DisjSets::prints() {
-    for (int i = 0; i < s.size(); ++i)
-        std::cout << "i: " << i << "\tvalue: " << s[i] << std::endl;
-}
+#include "../Common_Tools/DisjSets/DisjSetsHeight.h"
 
 int main() {
 
-    DisjSets ds(8);
+    DisjSetsHeight disjSets(8);
 
-    ds.unionSets(6, 7);
-    ds.unionSets(4, 3);
-    ds.unionSets(4, 5);
-    ds.unionSets(4, 6);
+    disjSets.UnionSets(6, 7);
+    disjSets.UnionSets(4, 3);
+    disjSets.UnionSets(4, 5);
+    disjSets.UnionSets(6, 3);
 
-    ds.prints();
+    disjSets.Print();
 
     return 0;
 }
